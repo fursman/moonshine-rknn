@@ -1,0 +1,5 @@
+pytest
+soundfile                  # examples/, bench/
+jiwer                      # bench/score.py
+whisper-normalizer         # bench/score.py
+scipy

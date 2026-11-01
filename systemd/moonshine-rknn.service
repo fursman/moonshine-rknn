@@ -1,0 +1,17 @@
+# /etc/systemd/system/moonshine-rknn.service -- adjust User and paths.
+[Unit]
+Description=Moonshine streaming speech-to-text, encoder on the RK3588 NPU
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/opt/moonshine-rknn
+ExecStart=/opt/moonshine-rknn/.venv/bin/python -m moonshine_rknn.server --models /opt/moonshine-rknn/models --port 8772
+# The four Cortex-A76 cores (4-7 on the RK3588): the A55s slow the decoder down.
+CPUAffinity=4-7
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

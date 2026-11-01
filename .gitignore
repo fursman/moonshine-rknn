@@ -1,0 +1,8 @@
+.venv/
+models/
+__pycache__/
+*.onnx
+*.rknn
+bench/subset/
+bench/LibriSpeech/
+bench/*.tar.gz

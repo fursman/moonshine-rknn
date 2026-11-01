@@ -1,0 +1,6 @@
+# On the machine that builds the NPU encoder (x86_64 or aarch64).
+torch
+transformers>=5.0          # moonshine_streaming
+onnx
+onnxruntime
+rknn-toolkit2==2.5.0       # 2.3.2 compiles this graph to NaNs
