@@ -179,10 +179,12 @@ def main():
     ap.add_argument("--port", type=int, default=8772)
     ap.add_argument("--npu-core", default="auto", choices=["auto", "0", "1", "2"],
                     help="NPU core for the encoder; pin it when another model shares the NPU")
+    ap.add_argument("--threads", type=int, default=4,
+                    help="CPU threads per onnxruntime session (the decoder is the one that matters)")
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     t0 = time.time()
-    m = MoonshineNpu(args.models, core=args.npu_core)
+    m = MoonshineNpu(args.models, threads=args.threads, core=args.npu_core)
     m.transcribe(np.zeros(SAMPLE_RATE, np.float32))
     log.info(f"Moonshine medium streaming, encoder on the {m.encoder.where}, ready in {time.time() - t0:.1f}s")
     asyncio.run(serve(m, args.host, args.port))
