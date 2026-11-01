@@ -1,26 +1,31 @@
 #!/usr/bin/env python3
 """Moonshine streaming medium with its encoder on the RK3588 NPU.
 
-The pipeline is the moonshine-voice library's (core/moonshine-streaming-model.cpp)
-with the work it repeats taken out:
+The pipeline is moonshine-voice's (core/moonshine-streaming-model.cpp and
+core/transcriber.cpp), with the work it repeats taken out:
 
-    frontend   CPU  official frontend.onnx, stateful, fed as audio arrives
+    VAD        CPU  Silero VAD cuts lines at pauses; each line starts fresh
+    frontend   CPU  frontend.onnx, stateful, fed 1280 samples at a time
     encoder    NPU  stream_encoder_c16.rknn: 16 new frames per call against an
-                    18-frame cache per layer, exactly the full-utterance encoder
-                    (the library re-encodes a 256-frame window every update)
-    adapter    CPU  official adapter.onnx, on the new frames only
-    cross K/V  CPU  official cross_kv.onnx, on the new frames only, appended
-                    (it is per-frame linear; the library recomputes all of it)
-    decoder    CPU  official decoder_kv.onnx: each update re-checks the last
-                    transcript in one parallel pass, keeps the agreed prefix's
-                    cache, and continues greedily, as the library does
+                    18-frame cache per layer, exactly the whole-utterance
+                    encoder (moonshine-voice re-encodes a ~250-frame window on
+                    every update); on the CPU from the int8 ONNX without an NPU
+    adapter    CPU  adapter.ort, on the new frames only
+    cross K/V  CPU  cross_kv.ort, on the new frames only, appended (they are
+                    per-frame linear; moonshine-voice recomputes all of them)
+    decoder    CPU  decoder_kv.ort on a thread of its own, greedy, using the
+                    last transcript as a draft that survives revisions; the
+                    final transcript is decoded during the speaker's pause
 
-Off the board (no rknnlite), the encoder runs stream_encoder_c16.onnx on the
-CPU, which is how this file is tested on a desktop.
+The .ort files are moonshine-voice's own build (scripts/fetch_models.py).
 
-    s = MoonshineNpu(models_dir).stream()   # python -m moonshine_rknn.engine clip.wav --models models/
-    s.feed(samples_16k)            # any number of times; partial() as it goes
-    text = s.finish()
+    m = MoonshineNpu("models")
+    s = m.stream()
+    s.feed(samples)          # float32, 16 kHz, any chunk size, any number of times
+    s.partial()              # the transcript so far
+    s.finish()               # the final transcript
+
+    python -m moonshine_rknn.engine clip.wav --models models [--realtime]
 """
 from __future__ import annotations
 

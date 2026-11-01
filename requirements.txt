@@ -1,6 +1,6 @@
-# On the board (RK3588: Turing RK1, Rock 5, Orange Pi 5, ...), Python 3.10-3.12.
-# librknnrt.so must be in /usr/lib: see README.
+# Python 3.10-3.12. On an RK3588, librknnrt.so must be in /usr/lib: see README.
 numpy<3
 onnxruntime>=1.20
-rknn-toolkit-lite2>=2.3
+rknn-toolkit-lite2>=2.3; platform_machine == "aarch64"   # the NPU; without it the encoder runs on the CPU
 tokenizers>=0.20
+soundfile                                                 # the engine's command line, examples/
